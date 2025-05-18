@@ -1,39 +1,58 @@
-
-
 import tkinter as tk
+from backend.logic import months
+from backend.database import MonthDB
+from bidi.algorithm import get_display
+import arabic_reshaper
+
+def convert(text):
+	reshaped = arabic_reshaper.reshape(text)
+	return get_display(reshaped)
 
 
-root = tk.Tk()
-root.geometry("400x600")
-root.title("To Shop App")
+def start_gui(mdb:MonthDB):
+	root = tk.Tk()
+	root.geometry("400x500")
+	root.title("To Shop App")
 
-monLabel = tk.Label(root, text="Months", font=("Arial", 20)).pack()
-comButton = tk.Button(root, text="Common List").pack()
-
-
-monthFrame = tk.Frame(root)
-monthFrame.columnconfigure(0, weight=1)
-monthFrame.columnconfigure(1, weight=1)
-monthFrame.columnconfigure(2, weight=1)
-
-mon1 = tk.Button(monthFrame, text="1").grid(row=0, column=0, sticky=tk.W+tk.E)
-mon2 = tk.Button(monthFrame, text="2").grid(row=0, column=1, sticky=tk.W+tk.E)
-mon3 = tk.Button(monthFrame, text="3").grid(row=0, column=2, sticky=tk.W+tk.E)
-
-mon4 = tk.Button(monthFrame, text="4").grid(row=1, column=0, sticky=tk.W+tk.E)
-mon5 = tk.Button(monthFrame, text="5").grid(row=1, column=1, sticky=tk.W+tk.E)
-mon6 = tk.Button(monthFrame, text="6").grid(row=1, column=2, sticky=tk.W+tk.E)
-
-mon7 = tk.Button(monthFrame, text="7").grid(row=2, column=0, sticky=tk.W+tk.E)
-mon8 = tk.Button(monthFrame, text="8").grid(row=2, column=1, sticky=tk.W+tk.E)
-mon9 = tk.Button(monthFrame, text="9").grid(row=2, column=2, sticky=tk.W+tk.E)
-
-mon10 = tk.Button(monthFrame, text="10").grid(row=3, column=0, sticky=tk.W+tk.E)
-mon11 = tk.Button(monthFrame, text="11").grid(row=3, column=1, sticky=tk.W+tk.E)
-mon12 = tk.Button(monthFrame, text="12").grid(row=3, column=2, sticky=tk.W+tk.E)
-
-monthFrame.pack(fill='x')
+	menubar = tk.Menu(root)
+	#
+	menumenu = tk.Menu(menubar, tearoff=0)
+	menubar.add_cascade(label="Menu", menu=menumenu)
+	menumenu.add_command(label="Common")
+	menumenu.add_separator()
+	menumenu.add_command(label="Exit", command=root.destroy)
+	#
+	menuhelp = tk.Menu(menubar, tearoff=0)
+	menubar.add_cascade(label="Help", menu=menuhelp)
+	menuhelp.add_command(label="Help")
 
 
+	topframe = tk.Frame()
+	topframe.pack(fill='x')
 
-root.mainloop()
+	topframe.columnconfigure(0, weight=9)
+	topframe.columnconfigure(1, weight=1)
+
+	monLabel = tk.Label(topframe, text="Months", font=("Arial", 20)).grid(row=0, column=0, rowspan=2)
+	comButton = tk.Button(topframe, text="Common List").grid(row=0, column=1, sticky=tk.W+tk.E)
+	helpButton = tk.Button(topframe, text="Help").grid(row=1, column=1, sticky=tk.W+tk.E)
+
+
+	monthFrame = tk.Frame(root)
+	monthFrame.pack(fill='both', expand=True)
+
+	for i in range(3):
+		monthFrame.columnconfigure(i, weight=1)
+	for i in range(4):
+		monthFrame.rowconfigure(i, weight=1)
+
+	monlist = months(mdb)
+	for i, month in enumerate(monlist):
+		row = i // 3 
+		col = i % 3
+		but = tk.Button(monthFrame, text=convert(month), font=("Arial", 14))
+		but.grid(row=row, column=col, sticky="nsew")
+
+
+	root.config(menu = menubar)
+	root.mainloop()

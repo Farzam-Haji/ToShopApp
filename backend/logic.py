@@ -1,6 +1,9 @@
 from .database import CommonDB, MonthDB
 
 # shared
+def months(mdb:MonthDB):
+	return mdb.get_months_names()
+
 def fetch_comItems(cdb:CommonDB):
 	itstr, itcost = cdb.get_items()
 	itlist = itstr.split("/./")

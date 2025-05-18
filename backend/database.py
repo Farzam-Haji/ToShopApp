@@ -251,3 +251,8 @@ class MonthDB(DB):
             current_cost = conn.execute("SELECT estcost FROM months WHERE morder = ?", (month,)).fetchone()[0]
             conn.execute("UPDATE months SET estcost = ? WHERE morder = ?", (current_cost + value, month))
             conn.commit()
+
+    def get_months_names(self) -> list[str]:
+        with self.connect() as conn:
+            fetchlist = conn.execute("SELECT name FROM months").fetchall()
+            return [x[0] for x in fetchlist]
