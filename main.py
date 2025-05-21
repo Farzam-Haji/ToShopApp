@@ -1,6 +1,6 @@
 from backend.database import DB, MonthDB, CommonDB
 from backend.logic import start_logic
-from gui.tkinter_gui import App
+from gui.tkinter_gui import start_gui
 
 
 if __name__ == "__main__" :
@@ -11,6 +11,7 @@ if __name__ == "__main__" :
 	monthDB = MonthDB()
 	commonDB = CommonDB()
 
-	# start_logic(monthDB, commonDB)
-	app = App(monthDB, commonDB)
-	app.mainloop()
+	# start_logic(monthDB, commonDB)ee
+	# app = App(monthDB, commonDB)
+	# app.mainloop()
+	start_gui(monthDB, commonDB)
