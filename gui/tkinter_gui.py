@@ -1,7 +1,7 @@
 
 import tkinter as tk
 from tkinter import ttk
-from backend.logic import add_monCost, del_monItem, fetch_comItems, fetch_monItems, months
+from backend.logic import add_comCost, add_comItem, add_comToMon, add_monCost, add_monItem, clean_com, clean_mon, del_comItem, del_monItem, fetch_comItems, fetch_monItems, months
 from backend.database import CommonDB, MonthDB
 from bidi.algorithm import get_display
 import arabic_reshaper
@@ -21,7 +21,7 @@ from PIL import Image, ImageTk
 global MonthInteger
 MonthInteger = 1
 
-def handle_delete(mdb, entry, textbox):
+def month_delete(mdb, entry, textbox):
     itemindex = int(entry.get())
     mitems = fetch_monItems(mdb, MonthInteger)[0]
     if 1 <= itemindex <= len(mitems):
@@ -34,18 +34,22 @@ def handle_delete(mdb, entry, textbox):
         print("invalid index")
 
 
-# def find_month_item(mdb, itemindex):
-# 	ind = int(itemindex)-1
-# 	mitems = fetch_monItems(mdb, MonthInteger)[0]
-# 	if ind > len(mitems) or ind < 0:
-# 		return error
-# 	else:
-# 		return mitems[ind]
+def common_delete(cdb, entry, text):
+	itemIndex = int(entry.get())
+	citems = fetch_comItems(cdb)[0]
+	if 1 <= itemIndex <= len(citems):
+		item = citems[itemIndex-1]
+		del_comItem(cdb, item)
+		entry.delete(0, tk.END)
+		refresh_common(text, cdb)
+	else:
+		entry.delete(0, tk.END)
+		print("invalid index")
 
 
 def refresh_common(text:tk.Text, cdb):
 	text.delete('1.0', tk.END)
-	text.insert(tk.END, "Month Items:\n\n")
+	text.insert(tk.END, "Common Items:\n\n")
 
 	citems, ccost = fetch_comItems(cdb)
 	for i, item in enumerate(citems):
@@ -54,6 +58,7 @@ def refresh_common(text:tk.Text, cdb):
 	text.insert(tk.END, f"\n\n\n*Estimated Cost: {ccost}*")
 
 def refresh_month(text:tk.Text, mdb):
+
 	text.delete('1.0', tk.END)
 	text.insert(tk.END, "Month Items:\n\n")
 
@@ -120,21 +125,39 @@ def open_common(master, cdb):
 
 	ttk.Separator(topframe, orient=tk.VERTICAL).grid(column=2, row=2, sticky='ns')
 	ttk.Separator(topframe, orient=tk.HORIZONTAL).grid(column=0, row=3, columnspan=5, sticky='ew')
+	ttk.Separator(topframe, orient=tk.VERTICAL).grid(column=3, row=4, sticky='ns')
 
-	addcostBut = tk.Button(topframe, text="Add Cost", font=("",9))
+	addcostBut = tk.Button(topframe, text="Add Cost", font=("",9), command=lambda:(
+		add_comCost(cdb, addcostEntry.get()),
+		addcostEntry.delete(0, tk.END),
+		refresh_common(texbox, cdb)
+		)
+	)
 	addcostBut.grid(row=2, column=0, sticky='ew')
 	addcostEntry = tk.Entry(topframe, width=10)
 	addcostEntry.grid(row=2, column=1, sticky='ew')
 
-	delItemBut = tk.Button(topframe, text="Remove", font=("",9))
+	delItemBut = tk.Button(topframe, text="Remove", font=("",9), command=lambda:common_delete(cdb, delItemEntry, texbox))
 	delItemBut.grid(row=2, column=3, sticky='ew')
 	delItemEntry = tk.Entry(topframe, width=10)
 	delItemEntry.grid(row=2, column=4, sticky='ew')
 
-	addItemBut = tk.Button(topframe, text="Add Item", font=("",9))
+	addItemBut = tk.Button(topframe, text="Add Item", font=("",9), command=lambda:(
+		add_comItem(cdb, addItemEntry.get()),
+		addItemEntry.delete(0, tk.END),
+		refresh_common(texbox, cdb)
+		)
+	)
 	addItemBut.grid(row=4, column=0, sticky='ew')
 	addItemEntry = tk.Entry(topframe)
-	addItemEntry.grid(row=4, column=1, columnspan=4, sticky='ew')
+	addItemEntry.grid(row=4, column=1, columnspan=2, sticky='ew')
+
+	clearBut = tk.Button(topframe, text=("Clear Commen"), font=("", 9), command=lambda:(
+		clean_com(cdb),
+		refresh_common(texbox, cdb)
+		)
+	)
+	clearBut.grid(row=4, column=4, sticky='ew')
 
 
 def start_gui(mdb:MonthDB, cdb:CommonDB):
@@ -205,18 +228,41 @@ def start_gui(mdb:MonthDB, cdb:CommonDB):
 	addcostEntry = tk.Entry(monthFrame, width=10)
 	addcostEntry.grid(row=2, column=1, sticky='ew')
 
-	delItemBut = tk.Button(monthFrame, text="Remove", font=("",9), command=lambda: handle_delete(mdb, delItemEntry, textbox))
+	delItemBut = tk.Button(monthFrame, text="Remove Item", font=("",9), command=lambda: month_delete(mdb, delItemEntry, textbox))
 	delItemBut.grid(row=2, column=3, sticky='ew')
 	delItemEntry = tk.Entry(monthFrame, width=10)
 	delItemEntry.grid(row=2, column=4, sticky='ew')
 
-	addItemBut = tk.Button(monthFrame, text="Add Item", font=("",9))
+	addItemBut = tk.Button(monthFrame, text="Add Item", font=("",9), command=lambda:(
+		add_monItem(mdb, MonthInteger, addItemEntry.get()),
+		addItemEntry.delete(0, tk.END),
+		refresh_month(textbox, mdb)
+		)
+	)
 	addItemBut.grid(row=4, column=0, sticky='ew')
 	addItemEntry = tk.Entry(monthFrame)
 	addItemEntry.grid(row=4, column=1, columnspan=2, sticky='ew')
 
-	addCommonBut = tk.Button(monthFrame, text="Add Common", font=("", 9))
-	addCommonBut.grid(row=4, column=4, sticky='ew')
+	extraButFrame = tk.Frame(monthFrame)
+	extraButFrame.grid(row=4, column=4, sticky='nsew')
+	for i in range (3):
+		extraButFrame.rowconfigure(i, weight=1)
+	addCommonBut = tk.Button(extraButFrame, text="Add Common", font=("", 9), command=lambda:(
+		add_comToMon(mdb, MonthInteger),
+		refresh_month(textbox, mdb)
+		)
+	)
+	addCommonBut.grid(row=0, sticky='ew')
+
+	ClearBut = tk.Button(extraButFrame, text="Clear Month", font=("", 9), command=lambda:(
+		clean_mon(mdb, MonthInteger),
+		refresh_month(textbox, mdb)
+		)
+	)
+	ClearBut.grid(row=1, sticky='ew')
+
+	ReturnBut = tk.Button(extraButFrame, text="Return Home", font=("", 9), command=lambda:switch_home(homeFrame, monthFrame))
+	ReturnBut.grid(row=2, sticky='ew')
 
 
 
